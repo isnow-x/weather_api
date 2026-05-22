@@ -12,6 +12,14 @@
     />
     <link rel="stylesheet" href="css/datepicker.material.css" />
     <script src="datepicker.js"></script>
+    <style>
+      .alert {
+        display: none;
+      }
+      .alert.active {
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -31,13 +39,11 @@
         </thead>
         <tbody id="target">
           <!-- <tr>
-            <th scope="row">1</th>
-            <td>Mark</td>
-            <td>Otto</td>
-            <td>@mdo</td>
+            <td colspan="4">조회중입니다.</td>
           </tr> -->
         </tbody>
       </table>
+      <div class="alert alert-primary" role="alert">A simple primary alert—check it out!</div>
     </div>
     <script>
       const dateForm = document.querySelector("#dateForm");
@@ -61,13 +67,17 @@
 
       dateForm.addEventListener("submit", e => {
         e.preventDefault();
-        console.log(datePicker.value); // 2026. 5. 22 -> 20260522
+        console.log(datePicker.value); //2026. 5. 22. -->20260522
         let formatDate = datePicker.value
           .replace(/\./g, "") // .만 제거
-          .trim() // 앞뒤 공백 제거, 없어도 됨
-          .split(/\s+/) // 공백 기준 배열 변환
-          .map((v, i) => (i === 0 ? v : String(v).padStart(2, "0"))) // 삼항 연산자 [2026,05,22]
+          .trim() //앞뒤 공백 제거
+          .split(/\s+/) //공백기준 배열 변환
+          .map((v, i) => (i === 0 ? v : String(v).padStart(2, "0"))) //[2026,05,22]
           .join(""); // 20260522
+
+        target.innerHTML = `<tr>
+            <td colspan="4">조회중입니다.</td>
+          </tr>`;
 
         console.log(formatDate); // 20260522
         inqueryShortTermWeather(formatDate);
@@ -75,35 +85,53 @@
 
       function inqueryShortTermWeather(date) {
         fetch(
-          `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=90b2faaf9e5de39fc215a37252f3950e9987e30ac745b701893a70469c2e2710&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${date}&base_time=0500&nx=55&ny=127`,
+          `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=jNu%2FUDr0Q2KYQ9rDGnLJqo4ahkjIQrHpn9wOnGbNXkmLqSFCj5rE6fYoLKFF1ELf5Yr4JDkQeCisuwGmsVfbOw%3D%3D&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${date}&base_time=0500&nx=55&ny=127`,
         )
           .then(res => {
             console.log(res);
+            if (!res.ok) {
+              throw new Error("서버에 문제가 있습니다. 잠시후 다시 시도해주세요");
+            }
             return res.json(); //json -> js object 변환, 다음 then으로 전달
           })
           .then(result => {
-            let data = result.response.body.items.item;
+            console.log(result);
+            let data = result.response?.body?.items?.item;
             console.log(data);
-            let t1hArr = data.filter(d => d.category === "TMP"); // 온도
-            let rehArr = data.filter(d => d.category === "REH"); // 습도
+            if (!data || data.length === 0) {
+              throw new Error("조회 결과가 없습니다.");
+            }
+
+            let t1hArr = data.filter(d => d.category === "TMP"); //온도
+            let rehArr = data.filter(d => d.category === "REH"); //습도
 
             console.log(t1hArr);
             console.log(rehArr);
-
             let tableData = "";
             t1hArr.forEach((data, i) => {
-              // 데이터가 없으면 -
+              //데이터가 없으면 -
               let rehData = rehArr[i]?.fcstValue || "-";
-
               tableData += `<tr>
                <th scope="row">${data.baseDate}</th>
                <td>${data.fcstTime}</td>
-               <td>${data.fcstValue}</td>
-               <td>${rehData}</td>
+               <td>${data.fcstValue}</td>      
+               <td>${rehData}</td>      
              </tr>`;
             });
             target.innerHTML = tableData;
+          })
+          .catch(error => {
+            console.log(error);
+            showMessage(error);
           });
+      }
+
+      //인포창 띄우기 함수
+      const alertBox = document.querySelector(".alert");
+
+      function showMessage(msg) {
+        alertBox.textContent = msg;
+        alertBox.classList.add("active");
       }
     </script>
   </body>
