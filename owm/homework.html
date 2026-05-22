@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>open weather<map name=""></map></title>
+  </head>
+  <body>
+    <h1>다낭시</h1>
+    <h2>현재 날씨</h2>
+    <h3>날씨 설명 : <span id="cdes"></span></h3>
+    <h3>습도 : <span id="chum"></span></h3>
+    <h3>풍속 : <span id="cwind"></span></h3>
+    <img id="icon" src="https://openweathermap.org/payload/api/media/file/04d.png" alt="" />
+    <script>
+      const cdes = document.querySelector("#cdes");
+      const chum = document.querySelector("#chum");
+      const cwind = document.querySelector("#cwind");
+      fetch(
+        "https://api.openweathermap.org/data/2.5/weather?id=1583992&appid=99fdd764c33c943c64681346847e512f&units=metric",
+      )
+        .then(res => res.json())
+        .then(result => {
+          let imgURL = `https://openweathermap.org/payload/api/media/file/${result.weather[0].icon}.png`;
+          cdes.innerText = result.weather[0].description;
+          chum.innerText = result.main.humidity;
+          cwind.innerText = result.wind.speed;
+          icon.setAttribute("src", imgURL);
+        });
+    </script>
+  </body>
+</html>
